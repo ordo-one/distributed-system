@@ -1,0 +1,21 @@
+extension Optional: Transferable where Wrapped: Transferable {
+    /// An optional travels as one discriminant byte, 0 for nil and 1 for a value, then the
+    /// value’s bytes.
+    @inlinable public var transferSize: Int { 1 + (self?.transferSize ?? 0) }
+
+    @inlinable @inline(always) public func transfer(into output: inout TransferWriter) {
+        if  let self: Wrapped {
+            output.append(1)
+            self.transfer(into: &output)
+        } else {
+            output.append(0)
+        }
+    }
+    @inlinable public init(transferring input: inout TransferReader) throws(TransferError) {
+        switch try input.readByte() {
+        case 0: self = nil
+        case 1: self = try Wrapped.init(transferring: &input)
+        case let code: throw .init(.invalidDiscriminant(.init(code)))
+        }
+    }
+}

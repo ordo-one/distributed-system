@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -euo pipefail
+set -x
+
+spm_flags=()
+if [[ "$(uname)" != "Darwin" ]]; then
+    spm_flags+=(--experimental-xcframeworks-on-linux)
+fi
+
+# TODO(#32): re-enable formatting check once Sources/ and Tests/ are formatted with dollup
+# swift package ${spm_flags[@]+"${spm_flags[@]}"} --allow-writing-to-package-directory dollup
+# git diff --exit-code
+
+swift build \
+    --explicit-target-dependency-import-check=error \
+    --build-tests \
+    ${spm_flags[@]+"${spm_flags[@]}"}
+
+swift test --no-parallel ${spm_flags[@]+"${spm_flags[@]}"}

@@ -1,0 +1,10 @@
+/Benchmarks/.build
+/Benchmarks/.benchmarkBaselines
+/Benchmarks/Package.resolved
+
+/.build
+/*.xcodeproj
+/*.xcframework
+/*.xcframework.zip
+/archives
+/Package.resolved

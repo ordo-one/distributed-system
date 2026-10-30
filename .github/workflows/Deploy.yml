@@ -1,0 +1,221 @@
+name: Deploy
+
+permissions:
+    contents: write
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'The version to deploy'
+                required: true
+                type: string
+    workflow_call:
+        inputs:
+            version:
+                description: 'The version to deploy'
+                required: true
+                type: string
+
+jobs:
+    macos:
+        runs-on: xcode-27
+        name: macOS
+        env:
+            DEPLOY_VERSION: ${{ inputs.version }}
+        steps:
+            -   name: 💝 Checkout 💝
+                uses: actions/checkout@v6
+
+            -   name: 💝 Select Xcode 27.2 💝
+                run: sudo xcode-select -s /Applications/Xcode_27.2.app/Contents/Developer
+
+            -   name: 💝 Swift version 💝
+                run: swift --version
+
+            -   name: 💝 Install XcodeGen 💝
+                run: brew install xcodegen
+
+            -   name: 💝 Build 💝
+                run: Scripts/Build/macOS
+
+            -   name: 💝 Upload 💝
+                uses: actions/upload-artifact@v6
+                with:
+                    name: xcframework-macos
+                    path: '*.xcframework.zip'
+                    compression-level: 0
+                    retention-days: 1
+                    overwrite: true
+
+    linux:
+        strategy:
+            matrix:
+                platform:
+                    -   name: "Ubuntu (x86_64)"
+                        arch: X64
+                        runs-on: ubuntu-24.04
+
+                    -   name: "Ubuntu (aarch64)"
+                        arch: ARM64
+                        runs-on: ubuntu-24.04-arm
+
+        runs-on: ${{ matrix.platform['runs-on'] }}
+        name: ${{ matrix.platform.name }}
+        env:
+            DEPLOY_VERSION: ${{ inputs.version }}
+        steps:
+            -   name: 💝 Checkout 💝
+                uses: actions/checkout@v6
+
+            -   name: 💝 Install Swift 💝
+                uses: rarestype/swift-install-action@v1
+                with:
+                    swift-release: 6.4.1-RELEASE
+
+            -   name: 💝 Swift version 💝
+                run: swift --version
+
+            -   name: 💝 Build 💝
+                run: Scripts/Build/Linux
+
+            -   name: 💝 Upload 💝
+                uses: actions/upload-artifact@v6
+                with:
+                    name: xcframework-linux-${{ matrix.platform.arch }}
+                    path: '*.xcframework.zip'
+                    # xcframeworks is already compressed, so don’t bother compressing it again
+                    compression-level: 0
+                    retention-days: 1
+                    overwrite: true
+
+    linux-merge:
+        runs-on: ubuntu-latest
+        needs: [linux]
+        name: Linux
+        steps:
+            -   name: 💝 Download XCFs 💝
+                uses: actions/download-artifact@v7
+                with:
+                    path: downloads
+                    pattern: xcframework-linux-*
+
+            # all plists are identical, so we can just take the first one for the merged XCF
+            -   name: 💝 Merge XCFs 💝
+                run: |
+                    mkdir -p constituents
+                    for file in downloads/*/*.zip; do
+                        unzip -o "$file" -d constituents/
+                    done
+
+                    cd constituents
+
+                    for framework in *.xcframework; do
+                        zip -r "${framework}.zip" "${framework}"
+                    done
+
+            -   name: 💝 Upload 💝
+                uses: actions/upload-artifact@v6
+                with:
+                    name: xcframework-linux
+                    path: constituents/*.xcframework.zip
+                    compression-level: 0
+                    retention-days: 1
+                    overwrite: true
+
+    release:
+        runs-on: ubuntu-latest
+        needs: [macos, linux-merge]
+        name: Publish Release
+        env:
+            DEPLOY_VERSION: ${{ inputs.version }}
+        steps:
+            -   name: 💝 Checkout 💝
+                uses: actions/checkout@v6
+
+            -   name: 💝 Git credential setup 💝
+                uses: ./.github/actions/credentials-setup
+                with:
+                    token: ${{ secrets.CI_MACHINE_PAT }}
+                    ordo-auth-token: ${{ secrets.ORDO_AUTH_TOKEN }}
+
+            -   name: 💝 Download macOS XCF 💝
+                uses: actions/download-artifact@v7
+                with:
+                    name: xcframework-macos
+                    path: release-artifacts
+
+            -   name: 💝 Download Linux XCF 💝
+                uses: actions/download-artifact@v7
+                with:
+                    name: xcframework-linux
+                    path: release-artifacts
+
+            -   name: 💝 Create draft GitHub release 💝
+                uses: softprops/action-gh-release@v2
+                id: create_release
+                with:
+                    repository: 'ordo-one/distributed-system-sdk'
+                    tag_name: ${{ inputs.version }}
+                    name: ${{ inputs.version }}
+                    draft: true
+                    files: release-artifacts/*.zip
+                    token: ${{ secrets.CI_MACHINE_PAT }}
+
+            -   name: 💝 Checkout downstream 💝
+                uses: actions/checkout@v6
+                with:
+                    repository: 'ordo-one/distributed-system-sdk'
+                    token: ${{ secrets.CI_MACHINE_PAT }}
+                    path: downstream
+
+            -   name: 💝 Generate Package.swift 💝
+                run: |
+                    CHECKSUM_MACOS=$(swift package compute-checksum release-artifacts/*-macOS.xcframework.zip)
+                    CHECKSUM_LINUX=$(swift package compute-checksum release-artifacts/*-Linux.xcframework.zip)
+
+                    ASSETS_JSON='${{ steps.create_release.outputs.assets }}'
+                    ASSET_URL_MACOS=$(echo "$ASSETS_JSON" | jq -r '.[] | select(.name | contains("macOS")) | .url')
+                    ASSET_URL_LINUX=$(echo "$ASSETS_JSON" | jq -r '.[] | select(.name | contains("Linux")) | .url')
+
+                    echo "macOS Checksum: ${CHECKSUM_MACOS}"
+                    echo "Linux Checksum: ${CHECKSUM_LINUX}"
+                    echo "macOS Asset URL: ${ASSET_URL_MACOS}"
+                    echo "Linux Asset URL: ${ASSET_URL_LINUX}"
+
+                    # canary to check that the files are accessible before pushing the commit
+                    curl -fsSL --netrc -H "Accept: application/octet-stream" -o /dev/null "$ASSET_URL_MACOS"
+                    curl -fsSL --netrc -H "Accept: application/octet-stream" -o /dev/null "$ASSET_URL_LINUX"
+
+                    cd downstream
+
+                    sed -e "s/__CHECKSUM_MACOS__/${CHECKSUM_MACOS}/g" \
+                        -e "s/__CHECKSUM_LINUX__/${CHECKSUM_LINUX}/g" \
+                        -e "s|__ASSET_URL_MACOS__|${ASSET_URL_MACOS}|g" \
+                        -e "s|__ASSET_URL_LINUX__|${ASSET_URL_LINUX}|g" \
+                        Package.template.swift > Package.swift
+
+                    git config user.name "rarest automation"
+                    git config user.email "automation@noreply.rarestype.com"
+
+                    git add Package.swift
+                    git commit -m "Release ${DEPLOY_VERSION}"
+                    git tag "${DEPLOY_VERSION}"
+                    git push origin main
+                    git push origin refs/tags/${DEPLOY_VERSION}
+
+            -   name: 💝 Publish GitHub release 💝
+                uses: softprops/action-gh-release@v2
+                with:
+                    repository: 'ordo-one/distributed-system-sdk'
+                    tag_name: ${{ inputs.version }}
+                    name: ${{ inputs.version }}
+                    draft: false
+                    generate_release_notes: true
+                    token: ${{ secrets.CI_MACHINE_PAT }}
+
+            -   name: 💝 Update badge 💝
+                uses: rarestype/rarestbadge@v1
+                if: always()
+                with:
+                    badge: SemanticRelease/_all
+                    title: Release
