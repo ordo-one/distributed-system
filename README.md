@@ -5,8 +5,6 @@ DistributedABI is the wire format of Ordo’s distributed calls: how an argument
 <!-- DO NOT EDIT BELOW! AUTOSYNC CONTENT [STATUS TABLE] -->
 | Platform | Status |
 | -------- | ------ |
-| 🐧 Linux | [![Status](https://raw.githubusercontent.com/ordo-one/distributed-system/refs/badges/ci/Tests/Linux/status.svg)](https://github.com/ordo-one/distributed-system/actions/workflows/Tests.yml) |
-| 🍏 Darwin | [![Status](https://raw.githubusercontent.com/ordo-one/distributed-system/refs/badges/ci/Tests/macOS/status.svg)](https://github.com/ordo-one/distributed-system/actions/workflows/Tests.yml) |
 <!-- DO NOT EDIT ABOVE! AUTOSYNC CONTENT [STATUS TABLE] -->
 
 
