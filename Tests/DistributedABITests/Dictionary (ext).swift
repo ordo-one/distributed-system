@@ -14,8 +14,7 @@ extension Dictionary: Fuzzable where Key: Fuzzable, Value: Fuzzable {
     }
 
     static func same(_ a: Self, _ b: Self) -> Bool {
-        a.count == b.count && a.allSatisfy {
-            (key: Key, value: Value) in
+        a.count == b.count && a.allSatisfy { (key: Key, value: Value) in
             b[key].map { Value.same(value, $0) } ?? false
         }
     }

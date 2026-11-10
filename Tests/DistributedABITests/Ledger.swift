@@ -17,10 +17,8 @@ struct Ledger<Key, Value> {
         self.values = values
     }
 }
-extension Ledger: Equatable where Key: Equatable, Value: Equatable {
-}
-extension Ledger: Sendable where Key: Sendable, Value: Sendable {
-}
+extension Ledger: Equatable where Key: Equatable, Value: Equatable {}
+extension Ledger: Sendable where Key: Sendable, Value: Sendable {}
 extension Ledger: ExpressibleByDictionaryLiteral {
     init(dictionaryLiteral entries: (Key, Value)...) {
         self.init(keys: entries.map(\.0), values: entries.map(\.1))

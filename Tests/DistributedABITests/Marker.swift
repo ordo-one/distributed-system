@@ -3,8 +3,7 @@ import DistributedABI
 /// A composite with no fields, which writes a zero so that it takes the one byte every value
 /// must, and so reads back from inside a collection.
 struct Marker: Equatable, Transferable {
-    init() {
-    }
+    init() {}
 }
 extension Marker {
     var transferSize: Int { 1 }

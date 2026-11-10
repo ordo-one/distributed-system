@@ -9,10 +9,8 @@ struct Batch<Element> {
         self.elements = elements
     }
 }
-extension Batch: Equatable where Element: Equatable {
-}
-extension Batch: Sendable where Element: Sendable {
-}
+extension Batch: Equatable where Element: Equatable {}
+extension Batch: Sendable where Element: Sendable {}
 extension Batch: ExpressibleByArrayLiteral {
     init(arrayLiteral elements: Element...) {
         self.init(elements: elements)
@@ -50,8 +48,9 @@ extension Batch: Transferable where Element: Transferable {
     init(transferring input: inout TransferReader) throws(TransferError) {
         let count: Int = try input.readCount(of: Element.self)
         var elements: [Element] = []
-        try elements.append(addingCapacity: count) {
-            (output: inout OutputSpan<Element>) throws(TransferError) in
+        try elements.append(
+            addingCapacity: count
+        ) { (output: inout OutputSpan<Element>) throws(TransferError) in
             try input.readElements(count: count, into: &output)
         }
         self.init(elements: elements)
