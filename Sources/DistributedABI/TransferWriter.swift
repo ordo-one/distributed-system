@@ -31,8 +31,10 @@ extension TransferWriter {
         // updates of initialized memory and defers this append to a follow-up proposal, which
         // would make this a safe call:
         // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0558-mutablespan-bulk-updates.md
-        unsafe self.output.withUnsafeMutableBytes {
-            (buffer: UnsafeMutableRawBufferPointer, initialized: inout Int) in
+        unsafe self.output.withUnsafeMutableBytes { (
+                buffer: UnsafeMutableRawBufferPointer,
+                initialized: inout Int
+            ) in
             bytes.withUnsafeBytes {
                 unsafe UnsafeMutableRawBufferPointer.init(
                     rebasing: buffer[initialized ..< initialized + count]
@@ -66,7 +68,9 @@ extension TransferWriter {
     // through the framework’s symbol stub, and kept out of line, away from every caller;
     // `@inlinable @inline(never)` was measured and still called through the stub, since a
     // non-generic body that is not inlined runs the library’s own copy
-    @usableFromInline @_alwaysEmitIntoClient @inline(never) mutating func append(multibyte value: UInt) {
+    @usableFromInline @_alwaysEmitIntoClient @inline(never) mutating func append(
+        multibyte value: UInt
+    ) {
         var value: UInt = value
         while true {
             let byte: UInt8 = .init(truncatingIfNeeded: value & 0x7f)
@@ -113,7 +117,9 @@ extension TransferWriter {
     /// itself. A collection of one’s own whose elements lie in contiguous storage writes its
     /// count with ``append(uleb128:)`` and then its elements through this, from a span of that
     /// storage, and reads them back with ``TransferReader/readElements(count:into:)``.
-    @inlinable public mutating func append<Element>(elements: Span<Element>) where Element: Transferable {
+    @inlinable public mutating func append<Element>(
+        elements: Span<Element>
+    ) where Element: Transferable {
         if  elements.count != 0, case _? = Element.bitwiseTransfer {
             self.append(bitwise: elements)
             return
@@ -127,7 +133,9 @@ extension TransferWriter {
     /// ``Transferable/bitwiseTransfer`` for the element type: the elements hold no strong, weak
     /// or unowned reference and no padding, and their storage is their transfer bytes, one
     /// after another.
-    @inlinable mutating func append<Element>(bitwise elements: Span<Element>) where Element: Transferable {
+    @inlinable mutating func append<Element>(
+        bitwise elements: Span<Element>
+    ) where Element: Transferable {
         self.append(bytes: unsafe elements.bytes)
     }
 

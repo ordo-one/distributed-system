@@ -4,8 +4,10 @@ extension OutputSpan where Element: Transferable {
     /// storage is those bytes.
     @_lifetime(self: copy self)
     @inlinable @inline(always) mutating func append(bitwise bytes: RawSpan, count: Int) {
-        unsafe self.withUnsafeMutableBufferPointer {
-            (buffer: UnsafeMutableBufferPointer<Element>, initialized: inout Int) in
+        unsafe self.withUnsafeMutableBufferPointer { (
+                buffer: UnsafeMutableBufferPointer<Element>,
+                initialized: inout Int
+            ) in
             precondition(count <= buffer.count &- initialized, "OutputSpan capacity overflow")
             let target: UnsafeMutableRawBufferPointer = unsafe .init(
                 UnsafeMutableBufferPointer<Element>.init(

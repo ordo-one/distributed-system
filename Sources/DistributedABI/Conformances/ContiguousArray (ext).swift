@@ -54,8 +54,9 @@ extension ContiguousArray: Transferable where Element: Transferable {
         } else {
             // generic, the initializer that hands out the uninitialized storage, which looks up
             // one generic type where reserving, or the span-based initializer, looks up several
-            self = unsafe .init(unsafeUninitializedCapacity: count) {
-                (buffer: inout UnsafeMutableBufferPointer<Element>, initialized: inout Int) in
+            self = unsafe .init(
+                unsafeUninitializedCapacity: count
+            ) { (buffer: inout UnsafeMutableBufferPointer<Element>, initialized: inout Int) in
                 bytes.withUnsafeBytes {
                     unsafe UnsafeMutableRawBufferPointer.init(buffer).copyMemory(from: $0)
                 }

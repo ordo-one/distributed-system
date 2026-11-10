@@ -19,8 +19,7 @@ extension Lent {
 extension Lent: Equatable {
     static func == (a: Self, b: Self) -> Bool { a.bytes == b.bytes }
 }
-extension Lent: Error {
-}
+extension Lent: Error {}
 extension Lent: Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.bytes)

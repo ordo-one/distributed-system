@@ -16,7 +16,7 @@ let package: Package = .init(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/ordo-one/dollup", from: "1.0.1"),
+        .package(url: "https://github.com/ordo-one/dollup", from: "1.3.4"),
     ],
     targets: [
         .target(
