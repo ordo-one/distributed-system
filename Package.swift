@@ -40,6 +40,8 @@ for target: Target in package.targets {
         var settings: [SwiftSetting] = $0 ?? []
 
         settings.append(.enableUpcomingFeature("ExistentialAny"))
+        settings.append(.treatWarning("ExistentialAny", as: .error))
+        settings.append(.treatWarning("MutableGlobalVariable", as: .error))
 
         $0 = settings
     } (&target.swiftSettings)
