@@ -2,14 +2,14 @@ import DistributedABI
 
 /// A value that states a fixed size of one byte but reads two, as a faulty conformer might: a
 /// debug build stops at it, rather than read every later element from the wrong offset.
-struct Overreader: Hashable, Transferable {
+struct Overreader: Hashable {
     let byte: UInt8
 
     init(byte: UInt8) {
         self.byte = byte
     }
 }
-extension Overreader {
+extension Overreader: Transferable {
     static var transferLayout: TransferLayout? { .fixed(size: 1) }
     var transferSize: Int { 1 }
 

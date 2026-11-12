@@ -17,18 +17,18 @@ import Testing
 /// the elements of every set and the entries of every dictionary in the order of their bytes,
 /// and a seed replays the same bytes in any process. A round trip from a replayed seed writes
 /// the same value, in an order that may differ, which is why its failure keeps the bytes.
-@Suite enum Fuzz {
+@Suite struct Fuzz {
     /// A random value writes exactly the bytes it states into a buffer of that size, and reads
     /// back as the same value from all of them.
-    @Test(arguments: Self.types) static func RandomValues(_ type: any Fuzzable.Type) {
-        Self.randomValues(type)
+    @Test(arguments: Self.types) static func RandomValues(_ type: any Fuzzable.Type) throws {
+        try Self.randomValues(type)
     }
 
     /// Random bytes, and truncations and single-byte mutations of a valid encoding, either
     /// decode or throw a ``TransferError``; a value that decodes writes back exactly the bytes
     /// it read, up to the order of the elements of a set and the entries of a dictionary.
-    @Test(arguments: Self.types) static func MalformedBytes(_ type: any Fuzzable.Type) {
-        Self.malformedBytes(type)
+    @Test(arguments: Self.types) static func MalformedBytes(_ type: any Fuzzable.Type) throws {
+        try Self.malformedBytes(type)
     }
 }
 extension Fuzz {
@@ -94,27 +94,27 @@ extension Fuzz {
     }
 }
 extension Fuzz {
-    private static func randomValues<Value>(_: Value.Type) where Value: Fuzzable {
-        let run: Run = .init(Value.self, test: "RandomValues")
-        defer {
-            run.finish()
-        }
-        for i: UInt64 in 0 ..< run.iterations {
-            run.start(i)
-            var random: SplitMix64 = .init(seed: run.seed(i))
-            var budget: Int = Self.budget
-            let value: Value = .random(using: &random, budget: &budget)
-            let bytes: [UInt8] = .init(transferring: value)
-            let failure: String?
-            if  bytes.count != value.transferSize {
-                let stated: Int = value.transferSize
-                failure = "wrote \(bytes.count) bytes \(Self.hex(bytes)), but states \(stated)"
-            } else {
-                failure = Self.reading(Value.self, value, from: bytes)
-            }
-            if  let failure: String {
-                Issue.record("\(run.failure(i)): \(Self.describe(value)): \(failure)")
-                return
+    private static func randomValues<Value>(_: Value.Type) throws where Value: Fuzzable {
+        try Run.perform(Value.self, test: "RandomValues") { (run: Run) in
+            for i: UInt64 in 0 ..< run.iterations {
+                try run.start(i)
+                var random: SplitMix64 = .init(seed: run.seed(i))
+                var budget: Int = Self.budget
+                let value: Value = .random(using: &random, budget: &budget)
+                let bytes: [UInt8] = .init(transferring: value)
+                let failure: String?
+                if  bytes.count != value.transferSize {
+                    let stated: Int = value.transferSize
+                    failure = """
+                    wrote \(bytes.count) bytes \(Self.hex(bytes)), but states \(stated)
+                    """
+                } else {
+                    failure = Self.reading(Value.self, value, from: bytes)
+                }
+                if  let failure: String {
+                    Issue.record("\(run.failure(i)): \(Self.describe(value)): \(failure)")
+                    return
+                }
             }
         }
     }
@@ -141,55 +141,55 @@ extension Fuzz {
     }
 }
 extension Fuzz {
-    private static func malformedBytes<Value>(_: Value.Type) where Value: Fuzzable {
-        let run: Run = .init(Value.self, test: "MalformedBytes")
-        defer {
-            run.finish()
-        }
-        for i: UInt64 in 0 ..< run.iterations {
-            run.start(i)
-            var random: SplitMix64 = .init(seed: run.seed(i))
+    private static func malformedBytes<Value>(_: Value.Type) throws where Value: Fuzzable {
+        try Run.perform(Value.self, test: "MalformedBytes") { (run: Run) in
+            for i: UInt64 in 0 ..< run.iterations {
+                try run.start(i)
+                var random: SplitMix64 = .init(seed: run.seed(i))
 
-            let count: Int = Int.random(in: 0 ..< 8, using: &random) == 0
-                ? .random(in: 0 ... 64, using: &random)
-                : .random(in: 0 ... 12, using: &random)
-            let noise: [UInt8] = (0 ..< count).map {
-                _ in
-                .random(in: 0 ... 255, using: &random)
-            }
+                let count: Int = Int.random(in: 0 ..< 8, using: &random) == 0
+                    ? .random(in: 0 ... 64, using: &random)
+                    : .random(in: 0 ... 12, using: &random)
+                let noise: [UInt8] = (0 ..< count).map { (_: Int) in
+                    .random(in: 0 ... 255, using: &random)
+                }
 
-            var budget: Int = Self.budget
-            let value: Value = .random(using: &random, budget: &budget)
-            let written: [UInt8] = .init(transferring: value)
-            guard
-            let valid: [UInt8] = Value.shape.canonical(written) else {
-                let bytes: String = Self.hex(written)
-                Issue.record(
-                    """
-                    \(run.failure(i)): \(Self.describe(value)) wrote \(bytes), not of its shape
-                    """
-                )
-                return
-            }
-            var truncated: [UInt8] = []
-            var mutated: [UInt8] = []
-            if !valid.isEmpty {
-                truncated = .init(valid[..<Int.random(in: valid.indices, using: &random)])
-                mutated = valid
-                mutated[Int.random(in: valid.indices, using: &random)] ^= .random(
-                    in: 1 ... 255,
-                    using: &random
-                )
-            }
-
-            for (kind, bytes): (String, [UInt8]) in [
-                    ("random bytes", noise),
-                    ("truncated", truncated),
-                    ("mutated", mutated),
-                ] {
-                if  let failure: String = Self.decoding(Value.self, from: bytes) {
-                    Issue.record("\(run.failure(i)): \(kind) \(Self.hex(bytes)): \(failure)")
+                var budget: Int = Self.budget
+                let value: Value = .random(using: &random, budget: &budget)
+                let written: [UInt8] = .init(transferring: value)
+                guard
+                let valid: [UInt8] = Value.shape.canonical(written) else {
+                    let bytes: String = Self.hex(written)
+                    Issue.record(
+                        """
+                        \(run.failure(i)): \(Self.describe(value)) wrote \(bytes), \
+                        not of its shape
+                        """
+                    )
                     return
+                }
+                var truncated: [UInt8] = []
+                var mutated: [UInt8] = []
+                if !valid.isEmpty {
+                    truncated = .init(valid[..<Int.random(in: valid.indices, using: &random)])
+                    mutated = valid
+                    mutated[Int.random(in: valid.indices, using: &random)] ^= .random(
+                        in: 1 ... 255,
+                        using: &random
+                    )
+                }
+
+                for (kind, bytes): (String, [UInt8]) in [
+                        ("random bytes", noise),
+                        ("truncated", truncated),
+                        ("mutated", mutated),
+                    ] {
+                    if  let failure: String = Self.decoding(Value.self, from: bytes) {
+                        Issue.record(
+                            "\(run.failure(i)): \(kind) \(Self.hex(bytes)): \(failure)"
+                        )
+                        return
+                    }
                 }
             }
         }

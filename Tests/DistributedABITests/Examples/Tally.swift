@@ -4,14 +4,16 @@ import Synchronization
 /// A case-index enumeration that states its number of discriminants and counts every read and
 /// write of its own conformance: a probe, which shows that an array of them takes the checked
 /// copy and calls neither.
-enum Tally: UInt8, CaseIterable, Equatable, Transferable {
+enum Tally: UInt8, CaseIterable, Equatable {
     case zero
     case one
     case two
-
+}
+extension Tally {
     static let reads: Atomic<Int> = .init(0)
     static let writes: Atomic<Int> = .init(0)
-
+}
+extension Tally: Transferable {
     static var transferLayout: TransferLayout? { .discriminant(count: 3) }
 
     func transfer(into output: inout TransferWriter) {

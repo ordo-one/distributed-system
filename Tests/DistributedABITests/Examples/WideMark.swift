@@ -3,7 +3,7 @@ import DistributedABI
 /// A value of one byte on the wire that states a discriminant layout but takes two bytes of
 /// memory, which only a one-byte type can bear out: an array of them travels one element at a
 /// time.
-struct WideMark: Equatable, Transferable {
+struct WideMark: Equatable {
     let value: UInt8
     let spare: UInt8
 
@@ -11,7 +11,8 @@ struct WideMark: Equatable, Transferable {
         self.value = value
         self.spare = 0
     }
-
+}
+extension WideMark: Transferable {
     static var transferLayout: TransferLayout? { .discriminant(count: 2) }
     var transferSize: Int { 1 }
 

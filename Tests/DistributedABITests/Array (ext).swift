@@ -23,7 +23,7 @@ extension Array: Fuzzable where Element: Fuzzable {
 
     static func random(using random: inout SplitMix64, budget: inout Int) -> Self {
         let count: Int = Fuzz.count(using: &random, budget: &budget)
-        return (0 ..< count).map { _ in .random(using: &random, budget: &budget) }
+        return (0 ..< count).map { (_: Int) in .random(using: &random, budget: &budget) }
     }
 
     static func same(_ a: Self, _ b: Self) -> Bool {

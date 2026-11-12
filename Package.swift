@@ -16,6 +16,7 @@ let package: Package = .init(
     ],
     dependencies: [
         .package(url: "https://github.com/ordo-one/dollup", from: "1.3.4"),
+        .package(url: "https://github.com/rarestype/swift-io", from: "3.4.0"),
     ],
     targets: [
         .target(
@@ -30,6 +31,7 @@ let package: Package = .init(
             name: "DistributedABITests",
             dependencies: [
                 .target(name: "DistributedABI"),
+                .product(name: "SystemIO", package: "swift-io"),
             ]
         ),
     ]

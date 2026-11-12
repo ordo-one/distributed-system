@@ -3,10 +3,16 @@ import DistributedABI
 /// A composite of two `UInt32`, which states that it is stored as its transfer bytes as the
 /// `@Transferable` macro planned for plugin-to-plugin calls would: from its fields’ own
 /// statements and its layout, checked in code.
-struct Pair: Equatable, Transferable {
+struct Pair: Equatable {
     let low: UInt32
     let high: UInt32
 
+    init(low: UInt32, high: UInt32) {
+        self.low = low
+        self.high = high
+    }
+}
+extension Pair: Transferable {
     static var transferLayout: TransferLayout? {
         guard
         let low: TransferLayout = UInt32.transferLayout,
@@ -29,10 +35,6 @@ struct Pair: Equatable, Transferable {
     func transfer(into output: inout TransferWriter) {
         self.low.transfer(into: &output)
         self.high.transfer(into: &output)
-    }
-    init(low: UInt32, high: UInt32) {
-        self.low = low
-        self.high = high
     }
     init(transferring input: inout TransferReader) throws(TransferError) {
         self.init(low: try .init(transferring: &input), high: try .init(transferring: &input))
