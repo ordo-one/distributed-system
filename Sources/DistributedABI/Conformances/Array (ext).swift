@@ -31,7 +31,8 @@ extension Array: Transferable where Element: Transferable {
     /// others one at a time; either way, a count the bytes remaining cannot hold is refused
     /// before anything is reserved.
     @inlinable public init(transferring input: inout TransferReader) throws(TransferError) {
-        guard case let (size, cases)? = Element.bitwiseTransfer else {
+        guard
+        let (size, cases): (Int, Int?) = Element.bitwiseTransfer else {
             try self.init(transferringElements: &input)
             return
         }

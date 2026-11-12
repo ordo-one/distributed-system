@@ -18,15 +18,15 @@ extension InlineArray: Transferable where Element: Transferable {
         let layout: TransferLayout = Element.transferLayout else {
             return nil
         }
-        let product: (partialValue: Int, overflow: Bool) = count
+        let (size, overflow): (Int, Bool) = count
             .multipliedReportingOverflow(by: layout.size)
-        if  product.overflow {
+        if  overflow {
             return nil
         }
         if  case .bitwise = layout {
-            return .bitwise(size: product.partialValue)
+            return .bitwise(size: size)
         } else {
-            return .fixed(size: product.partialValue)
+            return .fixed(size: size)
         }
     }
     @inlinable public var transferSize: Int {

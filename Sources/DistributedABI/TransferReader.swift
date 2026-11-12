@@ -179,10 +179,9 @@ extension TransferReader {
     ) throws(TransferError) where Element: Transferable {
         precondition(0 ... output.freeCapacity ~= count, "OutputSpan capacity overflow")
         // cannot overflow, since that many elements fit in the output’s memory at that stride
-        if  count != 0, case let (
-                size,
-                cases
-            )? = Element.bitwiseTransfer, count &* size <= self.remaining {
+        if  count != 0,
+            let (size, cases): (Int, Int?) = Element.bitwiseTransfer,
+            count &* size <= self.remaining {
             if  let cases: Int {
                 try self.checkDiscriminants(count, below: cases)
             }
@@ -296,11 +295,32 @@ extension TransferReader {
         if  count == 0 {
             return 0
         }
-        let size: (partialValue: Int, overflow: Bool) = (Key.transferLayout?.size ?? 1)
+        let (size, overflow): (Int, Bool) = (Key.transferLayout?.size ?? 1)
             .addingReportingOverflow(Value.transferLayout?.size ?? 1)
-        if  size.overflow || size.partialValue > 1 && count > self.remaining / size.partialValue {
+        if  overflow || (size > 1 && count > self.remaining / size) {
             throw .init(.excessiveCount(count, remaining: self.remaining))
         }
         return count
+    }
+
+    /// Checks the next `count` bytes, which the bytes remaining hold, against a number of
+    /// discriminants, without consuming them. At the first byte that is `cases` or more, it
+    /// consumes the bytes up to and including that one, as a read of one value at a time
+    /// would, and refuses it with the ``TransferError/Kind/invalidDiscriminant(_:)`` error
+    /// that read reports, so that the reader stands where the read of one value at a time
+    /// leaves it.
+    @inlinable mutating func checkDiscriminants(
+        _ count: Int,
+        below cases: Int
+    ) throws(TransferError) {
+        // cannot overflow, since `count` fits in the bytes remaining
+        let next: RawSpan = self.bytes.extracting(self.index ..< self.index &+ count)
+        guard
+        let offset: Int = next.firstDiscriminant(notBelow: cases) else {
+            return
+        }
+        let byte: UInt8 = next.load(fromByteOffset: offset, as: UInt8.self)
+        self.index &+= offset &+ 1
+        throw .init(.invalidDiscriminant(.init(byte)))
     }
 }
