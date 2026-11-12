@@ -76,7 +76,9 @@ extension Transferable {
                 return nil
             }
             return (1, count)
-        case .fixed?, nil:
+        case .fixed?:
+            return nil
+        case nil:
             return nil
         }
     }
