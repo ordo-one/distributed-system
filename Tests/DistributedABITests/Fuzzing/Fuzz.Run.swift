@@ -2,7 +2,7 @@ import SystemIO
 
 extension Fuzz {
     /// The iterations and the seed of one fuzz test of one type.
-    struct Run {
+    struct Run: ~Copyable {
         let iterations: UInt64
         let seed: UInt64
         let type: String
@@ -23,6 +23,9 @@ extension Fuzz {
     }
 }
 extension Fuzz.Run {
+    private static var iterationsVariable: String { "DISTRIBUTED_ABI_FUZZ_ITERATIONS" }
+    private static var seedVariable: String { "DISTRIBUTED_ABI_FUZZ_SEED" }
+
     /// Runs `body` for a few thousand iterations from a fixed seed, unless the environment
     /// asks for more, in which case the seed is random unless the environment gives one too.
     /// A long run prints its seed first, and keeps the iteration in progress in a file it
@@ -31,7 +34,7 @@ extension Fuzz.Run {
     static func perform<Value>(
         _: Value.Type,
         test: String,
-        with body: (Self) throws -> Void
+        with body: (borrowing Self) throws -> Void
     ) throws {
         let iterations: UInt64? = try Self.iterations()
         let seed: UInt64? = try Self.seed()
@@ -72,7 +75,7 @@ extension Fuzz.Run {
 
     private static func iterations() throws -> UInt64? {
         do throws(Environment.VariableGetterError<UInt64>) {
-            return try Environment["DISTRIBUTED_ABI_FUZZ_ITERATIONS", as: UInt64.self]
+            return try Environment[Self.iterationsVariable]
         } catch .undefined {
             return nil
         }
@@ -80,7 +83,7 @@ extension Fuzz.Run {
 
     private static func seed() throws -> UInt64? {
         guard
-        let value: String = Environment["DISTRIBUTED_ABI_FUZZ_SEED"] else {
+        let value: String = Environment[Self.seedVariable] else {
             return nil
         }
         let parsed: UInt64?
@@ -97,7 +100,7 @@ extension Fuzz.Run {
         guard
         let seed: UInt64 = parsed else {
             throw Environment.VariableGetterError<UInt64>.malformed(
-                "DISTRIBUTED_ABI_FUZZ_SEED",
+                Self.seedVariable,
                 value: value
             )
         }
@@ -106,7 +109,7 @@ extension Fuzz.Run {
 
     /// A path named for the test and the type in a directory of the temporary directory.
     private static func progressPath(test: String, type: String) throws -> FilePath {
-        let temporary: FilePath.Directory = .init(Environment["TMPDIR"] ?? "/tmp")
+        let temporary: FilePath.Directory = (try? Environment["TMPDIR"]) ?? "/tmp"
         let directory: FilePath.Directory = temporary / "distributed-abi-fuzz"
         try directory.create()
         let name: String = .init(
@@ -135,7 +138,7 @@ extension Fuzz.Run {
     func failure(_ i: UInt64) -> String {
         """
         \(self.type), iteration \(i) from seed \(Self.hex(self.seed)) (replay with \
-        DISTRIBUTED_ABI_FUZZ_SEED=\(Self.hex(self.seed(i))) DISTRIBUTED_ABI_FUZZ_ITERATIONS=1)
+        \(Self.seedVariable)=\(Self.hex(self.seed(i))) \(Self.iterationsVariable)=1)
         """
     }
 

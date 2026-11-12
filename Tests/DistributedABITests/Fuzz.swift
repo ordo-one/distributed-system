@@ -95,7 +95,7 @@ extension Fuzz {
 }
 extension Fuzz {
     private static func randomValues<Value>(_: Value.Type) throws where Value: Fuzzable {
-        try Run.perform(Value.self, test: "RandomValues") { (run: Run) in
+        try Run.perform(Value.self, test: "RandomValues") { (run: borrowing Run) in
             for i: UInt64 in 0 ..< run.iterations {
                 try run.start(i)
                 var random: SplitMix64 = .init(seed: run.seed(i))
@@ -142,7 +142,7 @@ extension Fuzz {
 }
 extension Fuzz {
     private static func malformedBytes<Value>(_: Value.Type) throws where Value: Fuzzable {
-        try Run.perform(Value.self, test: "MalformedBytes") { (run: Run) in
+        try Run.perform(Value.self, test: "MalformedBytes") { (run: borrowing Run) in
             for i: UInt64 in 0 ..< run.iterations {
                 try run.start(i)
                 var random: SplitMix64 = .init(seed: run.seed(i))
