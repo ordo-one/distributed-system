@@ -30,12 +30,6 @@ extension Identifier {
         self.init(bytes: transferBytes.withUnsafeBytes { [UInt8].init($0) })
     }
 }
-extension Identifier {
-    /// The byte count of an identifier handed anything other than 8 bytes.
-    struct ByteCount: Error {
-        let count: Int
-    }
-}
 extension Identifier: Fuzzable {
     static func random(using random: inout SplitMix64, budget _: inout Int) -> Self {
         .init(random.next())

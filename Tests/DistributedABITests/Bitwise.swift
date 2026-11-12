@@ -514,12 +514,6 @@ import Testing
     }
 }
 extension Bitwise {
-    /// A refusal, and where it left the reader.
-    struct Refusal: Equatable {
-        let kind: HostileInput.Expectation
-        let remaining: Int
-    }
-
     /// The error decoding `bytes` reports, with the number of bytes the reader had left when it
     /// did, or nil when they decode.
     static func refusal<Value>(
