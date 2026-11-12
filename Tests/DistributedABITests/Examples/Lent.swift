@@ -2,7 +2,7 @@ import DistributedABI
 
 /// A value whose bytes are its wire form and whose length varies, which counts the times it
 /// lends them: every copy adds to the same count.
-struct Lent: ContiguousTransferable {
+struct Lent {
     let bytes: [UInt8]
     let lends: Lends
 
@@ -25,7 +25,7 @@ extension Lent: Hashable {
         hasher.combine(self.bytes)
     }
 }
-extension Lent {
+extension Lent: ContiguousTransferable {
     func withTransferBytes<Result>(_ body: (RawSpan) throws -> Result) rethrows -> Result {
         self.lends.count.add(1, ordering: .relaxed)
         return try body(self.bytes.span.bytes)

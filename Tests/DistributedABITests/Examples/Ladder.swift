@@ -2,7 +2,7 @@ import DistributedABI
 
 /// A hand-written composite that holds an inline array, written and read field by field, and
 /// states the sum of its fields’ fixed sizes, so that it keeps a fixed size of its own.
-struct Ladder: Transferable {
+struct Ladder {
     let prices: InlineArray<2, Int32>
     let side: Side
 
@@ -11,7 +11,7 @@ struct Ladder: Transferable {
         self.side = side
     }
 }
-extension Ladder {
+extension Ladder: Transferable {
     static var transferLayout: TransferLayout? {
         guard
         let prices: TransferLayout = InlineArray<2, Int32>.transferLayout,

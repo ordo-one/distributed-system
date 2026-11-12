@@ -8,45 +8,45 @@ import Testing
 /// conformer, which a debug build of the caller stops at, wherever a collection reads the
 /// element, and a release build does not look for. Each read below runs in a process of its own,
 /// which must stop; a release build runs none of them.
-@Suite enum FaultyConformers {
+@Suite struct FaultyConformers {
     @Test(.enabled(if: _isDebugAssertConfiguration())) static func ReadShort() async {
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [Undersized].decode([1, 5, 6])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [Undersized: UInt8].decode([1, 5, 6, 7])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? InlineArray<1, Undersized>.decode([5, 6])
         }
     }
 
     @Test(.enabled(if: _isDebugAssertConfiguration())) static func ReadLong() async {
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [Overreader].decode([1, 5, 6])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [Overreader: UInt8].decode([1, 5, 6, 7])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [UInt8: Overreader].decode([1, 7, 5, 6])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? InlineArray<1, Overreader>.decode([5, 6])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? Batch<Overreader>.decode([1, 5, 6])
         }
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? Ledger<Overreader, UInt8>.decode([1, 5, 6, 7])
         }
     }
@@ -57,11 +57,12 @@ import Testing
         .enabled(if: _isDebugAssertConfiguration())
     ) static func ReadShortInsideAnInlineArray() async {
         await #expect(processExitsWith: .failure) {
-            FaultyConformers.dumpNoCore()
+            Self.dumpNoCore()
             _ = try? [InlineArray<2, Oversized>].decode([1, 1, 2])
         }
     }
-
+}
+extension FaultyConformers {
     /// The stop is expected, so on Darwin the process that makes it writes no core file, which
     /// on a shared Mac runner would take the disk and the time a crash report takes. Elsewhere
     /// this does nothing: on Linux, Swift Testing already sets the child’s core limit to one

@@ -3,7 +3,7 @@ import Testing
 
 /// Arrays of elements stored as their transfer bytes travel as one copy of their storage, with
 /// the bytes on the wire, and every refusal, exactly those of a read one element at a time.
-@Suite enum Bitwise {
+@Suite struct Bitwise {
     /// The layout every type states: the fixed-width integers, `Float` and `Double` are copied
     /// as stored on a little-endian host, and so are a wrapper and a composite that forward or
     /// compute it from their parts, and an inline array of such elements; `Bool` is a
@@ -187,7 +187,7 @@ import Testing
         let inline: InlineArray<2, Probe> = [.init(0x0102), .init(0x0304)]
         #expect([UInt8].init(transferring: inline) == Array.init(stored.dropFirst()))
         let read: InlineArray<2, Probe> = try .decode(Array.init(stored.dropFirst()))
-        #expect(read[0] == .init(0x0102) && read[1] == .init(0x0304))
+        #expect((read[0], read[1]) == (.init(0x0102), .init(0x0304)))
         // one at a time, the probe writes itself big-endian
         #expect([UInt8].init(transferring: probes[0]) == Self.littleEndian(0x0102).reversed())
         #endif
@@ -494,7 +494,10 @@ import Testing
         if  length == golden.count {
             let read: InlineArray<3, Pair> = try .decode(golden)
             #expect(
-                read[0] == .init(low: 0x0102_0304, high: 5) && read[2] == .init(low: 7, high: 8)
+                (read[0], read[2]) == (
+                    .init(low: 0x0102_0304, high: 5),
+                    .init(low: 7, high: 8)
+                )
             )
         }
     }

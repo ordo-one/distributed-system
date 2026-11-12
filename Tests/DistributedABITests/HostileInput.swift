@@ -1,7 +1,7 @@
 import DistributedABI
 import Testing
 
-@Suite enum HostileInput {
+@Suite struct HostileInput {
     /// Malformed and hostile bytes are refused with an error, never a trap, and a count or
     /// length the bytes present could not hold is refused before anything is reserved.
     @Test(
@@ -298,15 +298,15 @@ import Testing
     @Test(arguments: [-1, -.max, 4]) static func ReadBytesOutOfRange(_ count: Int) throws {
         let bytes: [UInt8] = [1, 2, 3]
         var input: TransferReader = .init(bytes.span.bytes)
-        let error: TransferError?
+        let refusal: TransferError?
         do {
             _ = try input.readBytes(count: count)
-            error = nil
-        } catch let refusal {
-            error = refusal
+            refusal = nil
+        } catch {
+            refusal = error
         }
         #expect(
-            error.map { Expectation.init($0.kind) } == .truncated(needed: count, remaining: 3)
+            refusal.map { Expectation.init($0.kind) } == .truncated(needed: count, remaining: 3)
         )
         #expect(input.remaining == 3)
     }
