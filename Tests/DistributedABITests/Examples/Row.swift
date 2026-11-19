@@ -2,14 +2,14 @@ import DistributedABI
 
 /// A value whose bytes are its wire form and whose length varies, as a serialized message is.
 /// It refuses empty bytes with an error of its own, which the transport must carry unchanged.
-struct Row: Equatable, ContiguousTransferable {
+struct Row: Equatable {
     let bytes: [UInt8]
 
     init(bytes: [UInt8]) {
         self.bytes = bytes
     }
 }
-extension Row {
+extension Row: ContiguousTransferable {
     func withTransferBytes<Result>(_ body: (RawSpan) throws -> Result) rethrows -> Result {
         try body(self.bytes.span.bytes)
     }

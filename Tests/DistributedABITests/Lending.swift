@@ -1,7 +1,7 @@
 import DistributedABI
 import Testing
 
-@Suite enum Lending {
+@Suite struct Lending {
     /// A send sizes its frame, then writes into it, and a contiguous value lends its bytes once
     /// for each, wherever it lies: one that builds its bytes on every lend builds them twice
     /// per send, however deeply its containers nest. The bytes are checked as well: the value

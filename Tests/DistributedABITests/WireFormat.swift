@@ -1,7 +1,7 @@
 import DistributedABI
 import Testing
 
-@Suite enum WireFormat {
+@Suite struct WireFormat {
     /// The bytes of every standard conformance, both ways: the value writes exactly these, and
     /// reads back from them.
     @Test(

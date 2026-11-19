@@ -4,7 +4,7 @@ import Testing
 import Foundation
 #endif
 
-@Suite enum Roundtrips {
+@Suite struct Roundtrips {
     @Test(arguments: Self.integers) static func Integers(
         _ value: any Transferable & Equatable
     ) throws {

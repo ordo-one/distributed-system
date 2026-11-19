@@ -1,14 +1,14 @@
 import DistributedABI
 
 /// An error that travels as the failure of a `Result`.
-struct Failure: Error, Equatable, Transferable {
+struct Failure: Error, Equatable {
     let code: Int32
 
     init(code: Int32) {
         self.code = code
     }
 }
-extension Failure {
+extension Failure: Transferable {
     static var transferLayout: TransferLayout? {
         Int32.transferLayout.map { .fixed(size: $0.size) }
     }

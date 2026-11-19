@@ -2,14 +2,14 @@ import DistributedABI
 
 /// A value that states a fixed size of two bytes but reads one, as a faulty conformer might:
 /// a debug build stops at it, rather than read every later element from the wrong offset.
-struct Undersized: Hashable, Transferable {
+struct Undersized: Hashable {
     let byte: UInt8
 
     init(byte: UInt8) {
         self.byte = byte
     }
 }
-extension Undersized {
+extension Undersized: Transferable {
     static var transferLayout: TransferLayout? { .fixed(size: 2) }
     var transferSize: Int { 2 }
 

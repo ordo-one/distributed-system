@@ -3,14 +3,14 @@ import DistributedABI
 /// A key that states a fixed size of `Int.max` bytes, so that the least size of a dictionary
 /// entry, its key’s size and its value’s, overflows: a dictionary with entries must be refused
 /// rather than trap, and an empty one, which reserves room for no entry, must still read.
-struct Oversized: Hashable, Transferable {
+struct Oversized: Hashable {
     let byte: UInt8
 
     init(byte: UInt8) {
         self.byte = byte
     }
 }
-extension Oversized {
+extension Oversized: Transferable {
     static var transferLayout: TransferLayout? { .fixed(size: .max) }
     var transferSize: Int { 1 }
 
