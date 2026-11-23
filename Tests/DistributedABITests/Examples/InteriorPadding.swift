@@ -2,10 +2,16 @@ import DistributedABI
 
 /// A composite with padding between its fields, which states that it is stored as its transfer
 /// bytes in the macro’s form: its offset check fails, so it does not.
-struct InteriorPadding: Equatable, Transferable {
+struct InteriorPadding: Equatable {
     let side: UInt8
     let price: Int64
 
+    init(side: UInt8, price: Int64) {
+        self.side = side
+        self.price = price
+    }
+}
+extension InteriorPadding: Transferable {
     static var transferLayout: TransferLayout? {
         guard
         let side: TransferLayout = UInt8.transferLayout,
@@ -28,10 +34,6 @@ struct InteriorPadding: Equatable, Transferable {
     func transfer(into output: inout TransferWriter) {
         self.side.transfer(into: &output)
         self.price.transfer(into: &output)
-    }
-    init(side: UInt8, price: Int64) {
-        self.side = side
-        self.price = price
     }
     init(transferring input: inout TransferReader) throws(TransferError) {
         self.init(side: try .init(transferring: &input), price: try .init(transferring: &input))

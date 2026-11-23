@@ -1,7 +1,7 @@
 import DistributedABI
 
 /// A hand-written composite with a contiguous field, written and read field by field.
-struct Envelope: Transferable {
+struct Envelope {
     let tag: UInt8
     let payload: Lent
 
@@ -10,7 +10,7 @@ struct Envelope: Transferable {
         self.payload = payload
     }
 }
-extension Envelope {
+extension Envelope: Transferable {
     var transferSize: Int {
         self.tag.transferSize + self.payload.transferSize
     }

@@ -28,7 +28,7 @@ import Testing
 //      }
 //      // error: lifetime-dependent variable 'input' escapes its scope
 
-@Suite enum Reader {
+@Suite struct Reader {
     @Test(arguments: [0, 1, 4, 9]) static func Bytes(_ count: Int) throws {
         let bytes: [UInt8] = .init(0 ..< 9)
         var input: TransferReader = .init(bytes.span.bytes)

@@ -2,10 +2,10 @@ import DistributedABI
 
 /// A composite with no fields, which writes a zero so that it takes the one byte every value
 /// must, and so reads back from inside a collection.
-struct Marker: Equatable, Transferable {
+struct Marker: Equatable {
     init() {}
 }
-extension Marker {
+extension Marker: Transferable {
     var transferSize: Int { 1 }
 
     func transfer(into output: inout TransferWriter) {

@@ -3,5 +3,10 @@ extension Bitwise {
     struct Refusal: Equatable {
         let kind: HostileInput.Expectation
         let remaining: Int
+
+        init(kind: HostileInput.Expectation, remaining: Int) {
+            self.kind = kind
+            self.remaining = remaining
+        }
     }
 }
