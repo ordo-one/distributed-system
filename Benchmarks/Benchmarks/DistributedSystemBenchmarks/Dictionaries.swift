@@ -1,6 +1,7 @@
+import Benchmark
 import DistributedABI
 
-/// The measured bodies of the rows that ``RegisterDictionaries`` registers.
+/// The measured bodies of the rows that ``Dictionaries.register()`` registers.
 enum Dictionaries {}
 extension Dictionaries {
     //  The read half of the dictionary round trip: each value is read back from its own
@@ -31,5 +32,56 @@ extension Dictionaries {
         }
         precondition(dictionaries[0].roundtrips, "dictionary roundtrip mismatch")
         return dictionaries
+    }
+}
+extension Dictionaries {
+    /// The two halves of `Standard RoundtripDictionary?`, measured apart, over values of the
+    /// same shape: the read builds a dictionary of strings for every entry, which is most of
+    /// the round trip and hides any change to the write. The write sizes each value from
+    /// `transferSize` and writes it into one frame, reserved before the measurement for the
+    /// largest value, as a send does and as the round trip does; the read decodes each value
+    /// from bytes written before the measurement, and keeps the values until the last, as the
+    /// round trip does. The contents are the same in every run, but the order of each
+    /// dictionary’s entries, in memory and on the wire, still follows the hash seed of the
+    /// process. Both rows are `Standard`, as the round trip is: the dictionary is a standard
+    /// type.
+    static func register() {
+        let configuration: Benchmark.Configuration = .init(
+            metrics: .default,
+            timeUnits: .microseconds
+        )
+
+        Benchmark.init(
+            "Standard WriteDictionary?",
+            configuration: configuration
+        ) { (benchmark: Benchmark, fixture: (values: [[Int: [String: Int]]?], capacity: Int)) in
+            let frame: UnsafeMutableRawBufferPointer = .allocate(
+                byteCount: fixture.capacity,
+                alignment: 16
+            )
+            defer {
+                frame.deallocate()
+            }
+            benchmark.startMeasurement()
+            for _: Int in benchmark.scaledIterations {
+                for dictionary: [Int: [String: Int]]? in fixture.values {
+                    blackHole(Sends.send(dictionary, into: frame))
+                }
+            }
+        } setup: {
+            let values: [[Int: [String: Int]]?] = Self.values()
+            return (values, values.reduce(0) { max($0, $1.transferSize) })
+        }
+        Benchmark.init(
+            "Standard ReadDictionary?",
+            configuration: configuration
+        ) { (benchmark: Benchmark, frames: [[UInt8]]) in
+            benchmark.startMeasurement()
+            for _: Int in benchmark.scaledIterations {
+                blackHole(try Self.read(frames, as: [Int: [String: Int]]?.self))
+            }
+        } setup: {
+            Self.values().map { [UInt8].init(transferring: $0) }
+        }
     }
 }
