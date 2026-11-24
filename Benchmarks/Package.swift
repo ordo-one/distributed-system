@@ -10,20 +10,20 @@ let package: Package = .init(
     products: [
     ],
     dependencies: [
-        .package(url: "https://github.com/ordo-one/dollup", from: "1.0.1"),
-        .package(url: "https://github.com/ordo-one/package-benchmark", from: "1.31.0"),
+        .package(url: "https://github.com/ordo-one/dollup", from: "1.3.4"),
+        .package(url: "https://github.com/ordo-one/benchmark", from: "1.31.0"),
         .package(name: "distributed-system", path: ".."),
     ],
     targets: [
         .executableTarget(
             name: "DistributedSystemBenchmarks",
             dependencies: [
-                .product(name: "Benchmark", package: "package-benchmark"),
+                .product(name: "Benchmark", package: "benchmark"),
                 .product(name: "OrdoDistributedABI", package: "distributed-system"),
             ],
             path: "Benchmarks/DistributedSystemBenchmarks",
             plugins: [
-                .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
+                .plugin(name: "BenchmarkPlugin", package: "benchmark")
             ]
         ),
     ]
