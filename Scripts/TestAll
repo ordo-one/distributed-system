@@ -9,6 +9,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 
 swift package ${spm_flags[@]+"${spm_flags[@]}"} --allow-writing-to-package-directory dollup
+swift package \
+    --package-path Benchmarks \
+    ${spm_flags[@]+"${spm_flags[@]}"} \
+    --allow-writing-to-package-directory dollup
 git diff --exit-code
 
 swift build \
