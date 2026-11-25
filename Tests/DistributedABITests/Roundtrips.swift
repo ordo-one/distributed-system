@@ -130,7 +130,7 @@ import Foundation
             Wide.low,
             Wide.high,
             WideSigned.one,
-            Result<Int, Failure>.success(42),
+            Result<Int, Failure>.success(13),
             Result<Int, Failure>.failure(.init(code: -1)),
             Result<String, Failure>.success("ok"),
             Result<[String?], Failure>.success(["a", nil]),

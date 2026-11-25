@@ -16,12 +16,13 @@ extension Batch: ExpressibleByArrayLiteral {
         self.init(elements: elements)
     }
 }
-extension Batch: RandomAccessCollection {
+extension Batch: Collection {
     var startIndex: Int { self.elements.startIndex }
     var endIndex: Int { self.elements.endIndex }
 
     subscript(position: Int) -> Element { self.elements[position] }
 }
+extension Batch: RandomAccessCollection {}
 extension Batch: RangeReplaceableCollection {
     init() {
         self.init(elements: [])

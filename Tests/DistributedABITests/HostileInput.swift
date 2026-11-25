@@ -298,16 +298,10 @@ import Testing
     @Test(arguments: [-1, -.max, 4]) static func ReadBytesOutOfRange(_ count: Int) throws {
         let bytes: [UInt8] = [1, 2, 3]
         var input: TransferReader = .init(bytes.span.bytes)
-        let refusal: TransferError?
-        do {
+        let error: TransferError = try #require(throws: TransferError.self) {
             _ = try input.readBytes(count: count)
-            refusal = nil
-        } catch {
-            refusal = error
         }
-        #expect(
-            refusal.map { Expectation.init($0.kind) } == .truncated(needed: count, remaining: 3)
-        )
+        #expect(Expectation.init(error.kind) == .truncated(needed: count, remaining: 3))
         #expect(input.remaining == 3)
     }
 
